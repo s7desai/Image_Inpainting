@@ -305,7 +305,7 @@ def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losse
 
 
 ######Setting all the hyperparameters
-epochs = 200
+epochs = 300
 num_latent_features = 2000
 
 model = AlexNet(num_latent_features)
@@ -318,11 +318,11 @@ start_epochs = 0
 avg_losses = []
 
 # Loading the model
-# checkpoint = torch.load('/home/sghosal/Project/Image_Inpainting/scripts/checkpoint-100-1500.pth.tar')
-# model.load_state_dict(checkpoint['model_state_dict'])
-# # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-# start_epochs = checkpoint['epochs']
-# avg_losses = checkpoint['average losses']
+checkpoint = torch.load('/home/sghosal/Project/Image_Inpainting/scripts/checkpoint-alexnet-250-1500.pth.tar')
+model.load_state_dict(checkpoint['model_state_dict'])
+optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+start_epochs = checkpoint['epochs']
+avg_losses = checkpoint['average losses']
 
 ### Resume the training
 train(train_loader,start_epochs, epochs, model, device, optimizer, avg_losses)
