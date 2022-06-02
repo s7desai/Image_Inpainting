@@ -8,21 +8,21 @@ Implementation of Context Encoder for Image Inpainting
 
 ## Training Variational AutoEncoder with VGG like encoder network
 Run VAE.py in a tmux session.
-<pre> tmux new -s ImgInp</pre>
+<pre>$tmux new -s ImgInp</pre>
 <pre>$python3 VAE.py</pre>
 Press Ctrl + D to detach from tmux session. To reattach to session at a later time, 
 <pre>$tmux a -t ImgInp</pre>
 
 ## Training Variational AutoEncoder with AlexNet like encoder network
 Run AlexNet.py in a tmux session.
-<pre> tmux new -s ImgInp</pre>
+<pre>$tmux new -s ImgInp</pre>
 <pre>$python3 AlexNet.py</pre>
 Press Ctrl + D to detach from tmux session. To reattach to session at a later time, 
 <pre>$tmux a -t ImgInp</pre>
 
 ## Training Context Encoder with Adversarial loss (GAN) 
 Run gan.py
-<pre> tmux new -s ImgInp</pre>
+<pre>$tmux new -s ImgInp</pre>
 <pre>$python3 gan.py</pre>
 Press Ctrl + D to detach from tmux session. To reattach to session at a later time, 
 <pre>$tmux a -t ImgInp</pre>
