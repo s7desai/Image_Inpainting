@@ -458,7 +458,8 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
             epoch_g_loss_adv = sum_g_loss_adv/len(train_loader)
             epoch_g_loss_pixel = sum_g_loss_pixel/len(train_loader)
             epoch_g_loss = sum_g_loss/len(train_loader)
-            end = time.time()   
+            end = time.time()  
+            print(f'generator loss : {epoch_g_loss} discriminator loss : {epoch_d_loss}')
             time_epoch = (end - start)/60
             total_time +=time_epoch
             # Save models
@@ -496,4 +497,4 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
     except KeyboardInterrupt:
           print("Interrupted")
             
-training(train_loader, last_epoch = 25, restore = True)
+training(train_loader, last_epoch = 50, restore = True)

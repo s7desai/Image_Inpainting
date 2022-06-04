@@ -37,8 +37,8 @@ class Data(D.Dataset):
         self.path_mask = path_mask
         self.path_gt = path_gt
         self.transform = transforms.Compose([transforms.ToTensor()])
-        files_mask = sorted(glob.glob(os.path.join(path_mask, '*.jpg')), key=numericalSort)[:15000]
-        files_gt = sorted(glob.glob(os.path.join(path_gt, '*.jpg')), key = numericalSort)[:15000]
+        files_mask = sorted(glob.glob(os.path.join(path_mask, '*.jpg')), key=numericalSort)[:5000]
+        files_gt = sorted(glob.glob(os.path.join(path_gt, '*.jpg')), key = numericalSort)[:5000]
         for mask, gt in  zip(files_mask, files_gt):
             self.masked.append(mask)
             self.gt.append(gt)
@@ -191,13 +191,13 @@ def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losse
             optimizer.step()
             
             if epoch %2 == 0:
-                torch.save(model.state_dict(), './context_vae.pt')
+                torch.save(model.state_dict(), f'./context_vae_{epoch}.pt')
                 torch.save({
                     'epochs': epochs,
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                     'average losses' : avg_losses
-                    }, 'checkpoint-{}-1500.pth.tar'.format(epochs))
+                    }, 'checkpoint-{}-vgg.pth.tar'.format(epoch))
 
         ### Statistics   
         avg_losses.append(train_loss/len(trainloader))
@@ -236,11 +236,11 @@ start_epochs = 0
 avg_losses = []
 
 # Loading the model
-checkpoint = torch.load('/home/sghosal/Project/Image_Inpainting/scripts/checkpoint-100-1500.pth.tar')
-model.load_state_dict(checkpoint['model_state_dict'])
-# optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-start_epochs = checkpoint['epochs']
-avg_losses = checkpoint['average losses']
-
+# checkpoint = torch.load('/home/sghosal/Project/Image_Inpainting/scripts/checkpoint-200-1500.pth.tar')
+# model.load_state_dict(checkpoint['model_state_dict'])
+# # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+# start_epochs = checkpoint['epochs']
+# avg_losses = checkpoint['average losses']
+epochs = start_epochs + 50
 ### Resume the training
 train(train_loader,start_epochs, epochs, model, device, optimizer, avg_losses)
