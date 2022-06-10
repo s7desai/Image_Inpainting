@@ -207,7 +207,7 @@ def VAE_loss(x_recon, y, mean, logvar):
     
     return loss + kl_loss
 
-def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losses):
+def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losses,num_latent):
     if len(avg_losses) > 1:
         avg_losses = avg_losses
     else:
@@ -235,13 +235,13 @@ def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losse
             optimizer.step()
             
             if epoch %2 == 0:
-                torch.save(model.state_dict(), './models/VAE_ResNet/context_vae.pt')
+                torch.save(model.state_dict(), f'./models/VAE_ResNet/context_vae_latent{num_latent}.pt')
                 torch.save({
                     'epochs': epochs,
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                     'average losses' : avg_losses
-                    }, './models/VAE_ResNet/checkpoint-{}.pth.tar'.format(epochs))
+                    }, './models/VAE_ResNet/checkpoint-{}_latent{}.pth.tar'.format(epochs,num_latent))
 
         ### Statistics   
         avg_losses.append(train_loss/len(trainloader))
@@ -262,7 +262,7 @@ def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losse
 
 # Setting all the hyperparameters
 epochs = 10
-num_latent = 2000
+num_latent = 4000
 
 # model = AlexNet(num_latent)
 model = VAE_ResNet(num_latent, True)
@@ -275,13 +275,12 @@ start_epochs = 0
 avg_losses = []
 
 # Loading the model
-# checkpoint = torch.load('./checkpoint-alexnet-250-1500.pth.tar')
-# checkpoint = torch.load('./checkpoint-200-1500.pth.tar')
+# checkpoint = torch.load('./models/VAE_ResNet/checkpoint-50.pth.tar')
 # model.load_state_dict(checkpoint['model_state_dict'])
 # # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 # start_epochs = checkpoint['epochs']
 # avg_losses = checkpoint['average losses']
-# print(start_epochs)
-### Resume the training
-epochs = start_epochs + 50
-train(train_loader,start_epochs, epochs, model, device, optimizer, avg_losses)
+# # print(start_epochs)
+# ### Resume the training
+epochs = start_epochs + 30
+train(train_loader,start_epochs, epochs, model, device, optimizer, avg_losses,num_latent)

@@ -163,7 +163,7 @@ def VAE_loss(x_recon, y, mean, logvar):
     return loss + kl_loss
 
 
-def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losses):
+def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losses,num_latent):
     if len(avg_losses) > 1:
         avg_losses = avg_losses
     else:
@@ -191,7 +191,7 @@ def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losse
             optimizer.step()
             
             if epoch %2 == 0:
-                torch.save(model.state_dict(), f'./context_vae_{epoch}.pt')
+                torch.save(model.state_dict(), f'./models/VAE_VGG/context_vae_numlatent{num_latent}_epoch{epoch}.pt')
                 torch.save({
                     'epochs': epochs,
                     'model_state_dict': model.state_dict(),
@@ -224,7 +224,7 @@ def train(trainloader, start_epochs, epochs, model, device, optimizer, avg_losse
 
 ######Setting all the hyperparameters
 epochs = 200
-num_latent = 2000
+num_latent = 4000
 
 model = Net(num_latent)
 device = ('cuda' if torch.cuda.is_available() else 'cpu')
@@ -241,6 +241,6 @@ avg_losses = []
 # # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 # start_epochs = checkpoint['epochs']
 # avg_losses = checkpoint['average losses']
-epochs = start_epochs + 50
+epochs = start_epochs + 30
 ### Resume the training
-train(train_loader,start_epochs, epochs, model, device, optimizer, avg_losses)
+train(train_loader,start_epochs, epochs, model, device, optimizer, avg_losses,num_latent)

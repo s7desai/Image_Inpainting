@@ -17,41 +17,14 @@ import matplotlib.pyplot as plt
 import time
 import cv2
 from tqdm import tqdm
-import numpy as np
-import pandas as pd
-import gc
-import warnings
-warnings.filterwarnings('ignore')
-import os
-import glob
-import os.path as osp
-from PIL import Image
-import torch
-import torchvision
-import torchvision.transforms as transforms
-from torch.utils import data as D
-import torch.nn as nn
-import torch.nn.functional as F
-import matplotlib.pyplot as plt
-import time
-import cv2
-from tqdm import tqdm
-import os
 import zipfile 
-import torch
 import time
-import torchvision.transforms as T
 import random as rnd
 import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from PIL import Image
-from matplotlib import pyplot as plt
 from torchvision.transforms import functional as TF
 from torchvision.utils import make_grid,save_image
 from torchvision.datasets import ImageFolder,DatasetFolder
-from torch.utils.data import Dataset,DataLoader,Subset
 from torch.autograd import Variable
 from torchvision.transforms import InterpolationMode
 from numpy.random import choice
@@ -268,9 +241,7 @@ res = 0.06
 density = 0.25
 MAX_SIZE = 10000
 
-# Paths 
-save_path_discriminator = "./gan/checkpoint_discriminator.pth"
-save_path_generator = "./gan/checkpoint_generator.pth"
+
 
 # Restore backups
 restore = False
@@ -301,8 +272,8 @@ def create_model(bottleneck=4000, gen_lr=0.0002, dis_lr=0.0002, gen_weight_decay
 
 
 
-def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last_epoch=200,save_photos_interval=10,overlapL2Weight=10, restore = False):
-    '''
+def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last_epoch=200,save_photos_interval=10,overlapL2Weight=10, restore = False, bottleneck = 4000):
+        '''
     train_loader: Dataloader of train data
     test_loader : Dataloader of test data
     labels_noise: Boolean that enable labels smoothing and flipping
@@ -313,16 +284,10 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
 
     '''
     # Define labels 
-    
-    path_toSave_photos = "/content/images/"
-    total_time = 0
-    # load test image
-    # test_image= next(iter(test_loader))
-    # test_image = test_image.to(dev)
-    # test_masked_imgs =test_image.clone() 
+    total_time = 0 
     # Create the models 
     g_net,d_net,g_optimizer,d_optimizer = create_model()
-    # If backup it's available load it 
+    If backup it's available load it 
     if os.path.isfile(save_path_discriminator) and os.path.isfile(save_path_generator) and restore:
         checkpoint_d =  torch.load(save_path_discriminator)
         checkpoint_g =  torch.load(save_path_generator)
@@ -353,30 +318,22 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
             sum_g_loss = 0
             sum_g_loss_adv = 0
             sum_g_loss_pixel = 0
-            # Training mode
             d_net.train()
             g_net.train()
-            # Process all training batches
             i = 0
     
             for i,(x,y) in tqdm(enumerate(train_loader)):
                 batch_length = x.shape[0]
-#                 print(f'batch size : {batch_length}')
                 valid = Variable(Tensor(batch_length).fill_(1.0), requires_grad=False)
                 fake = Variable(Tensor(batch_length).fill_(0.0), requires_grad=False)
                 x = x.to(device)
                 y = y.to(device)
-                # Move to device
                 i+=1
-#                 masked_parts = get_center(batch)
                 masked_parts = y[:,:,96:160,96:160]
                 #masked_parts are the center of the images 
                 masked_parts = Variable(masked_parts.type(Tensor))
                 masked_imgs = x.clone()
-#                 masked_imgs = apply_center_mask(img_mask)
-#                 masked_imgs = Variable(masked_imgs.type(Tensor))
 
-                ### Discriminator 
                 
                 # Reset discriminator gradient
                 d_optimizer.zero_grad()
@@ -386,14 +343,12 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
                 # Compute loss (discriminator, real)
                
                 d_real_loss =  F.binary_cross_entropy(output, valid)
+                
                 # Backward (discriminator, real)
                 d_real_loss.backward()
-                sum_d_real_loss += d_real_loss.item()  
-                #generate sample from masked images         
+                sum_d_real_loss += d_real_loss.item()         
                 g_output = g_net(masked_imgs)
-                # Forward (discriminator, fake; also generator forward pass)
-                output = d_net(g_output.detach()) # This prevents backpropagation from going inside the generator
-                # Compute loss (discriminator, fake)
+                output = d_net(g_output.detach()) 
                 d_fake_loss = F.binary_cross_entropy(output, fake)
                 # Backward (discriminator, fake)
                 d_fake_loss.backward()
@@ -409,20 +364,9 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
                 output =  d_net(g_output)
                 # Compute adversarial loss
                 g_loss_adv = F.binary_cross_entropy(output, valid)            
-                # Comput pixelwise loss
-                # but amplifying weights 10x 
-                #g_loss_pixel =  criterionMSE(g_output,masked_parts)
-#                 wtl2Matrix = masked_parts.clone()
-                # OverlapL2weight = 10
-#                 wtl2Matrix.data.fill_(wtl2*overlapL2Weight)
-#                wtl2Matrix.data[:,:,overlapPred:mask_size-overlapPred,overlapPred:mask_size-overlapPred] = wtl2
-                # MSE Loss
+                mask_size-overlapPred,overlapPred:mask_size-overlapPred] = wtl2
                 g_loss_pixel = (g_output-masked_parts).pow(2)
-                # Multiply 
-#                 g_loss_pixel = g_loss_pixel * wtl2Matrix
                 g_loss_pixel = g_loss_pixel.mean()
-#                 print(f'generator loss pixel : {g_loss_pixel}')
-                # The losse it's the sum of adv and pixel
                 g_loss = (1-wtl2) * g_loss_adv + wtl2 * g_loss_pixel
                 sum_g_loss_adv += g_loss_adv.item()
                 sum_g_loss_pixel += g_loss_pixel.item()
@@ -448,9 +392,7 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
                                 'loss': d_loss,
                                 'epoch': epoch
                                 }, save_path_discriminator)
-#                 if (i%700==0):
-#                     print(f"Batches {i}/{len(train_loader)}")
-
+                    
             # Epoch end, print losses
             epoch_d_loss = sum_d_loss/len(train_loader)
             epoch_d_real_loss = sum_d_real_loss/len(train_loader)
@@ -458,43 +400,11 @@ def training(train_loader,test_loader= None, labels_noise=False,wtl2= 0.999,last
             epoch_g_loss_adv = sum_g_loss_adv/len(train_loader)
             epoch_g_loss_pixel = sum_g_loss_pixel/len(train_loader)
             epoch_g_loss = sum_g_loss/len(train_loader)
-            end = time.time()  
-            print(f'generator loss : {epoch_g_loss} discriminator loss : {epoch_d_loss}')
+            end = time.time()   
             time_epoch = (end - start)/60
             total_time +=time_epoch
-            # Save models
-#             torch.save({'g_state_dict': g_net.state_dict(),
-#                         'optimizer_state_dict': g_optimizer.state_dict(),
-#                         'loss': g_loss,
-#                         'loss_pixel': g_loss_pixel,
-#                         'loss_adv': g_loss_adv,
-#                         'epoch':epoch,
-#                         }, save_path_generator)
 
-#             torch.save({'d_state_dict': d_net.state_dict(),
-#                         'optimizer_state_dict': d_optimizer.state_dict(),
-#                         'loss_fake': d_fake_loss,
-#                         'loss_real': d_real_loss,
-#                         'loss': d_loss,
-#                         'epoch': epoch
-#                         }, save_path_discriminator)
-#             if ((epoch+1)%save_photos_interval==0):
-#                 compare_and_save(64,path_toSave_photos,test_loader,g_net)
-#             print(f"Epoch {epoch+1} DL={epoch_d_loss:.4f} DR={epoch_d_real_loss:.4f} DF={epoch_d_fake_loss:.4f} GL={epoch_g_loss:.4f} GLP={epoch_g_loss_pixel:.4f} GLADV={epoch_g_loss_adv:.4f} Time {time_epoch:.1f}min Total Time: {total_time/60 :.1f}h")
-#             # Evaluation mode
-#             g_net.eval()
-#             with torch.no_grad():
-#                 # Removing center from the test sample
-#                 sample = apply_center_mask(test_image)
-#                 # Forward (generator)
-#                 g_sample = g_net(sample)
-#                 # Impanting the image generated to the original
-#                 test_masked_imgs[:,:,(mask_size//2):img_size-(mask_size//2),(mask_size//2):img_size-(mask_size//2)] = g_sample.data
-#                 plt.imshow(TF.to_pil_image(make_grid(test_masked_imgs[:4], scale_each=True, normalize=True).cpu()))
-#                 plt.axis('off')
-#                 plt.show()
-                
     except KeyboardInterrupt:
           print("Interrupted")
             
-training(train_loader, last_epoch = 50, restore = True)
+training(train_loader, last_epoch = 25, restore = False, bottleneck = 500)
