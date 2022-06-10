@@ -1,3 +1,5 @@
 gan.zip
 gan/
 *.pt
+.ipynb_checkpoints
+
