@@ -49,8 +49,8 @@ To restore training from previous checkpoint, pass restore = True to the trainin
 ## Results 
 Below, we show some of the reconstructions obtained using VAE and GAN's 
 
-|Left : Original , Middle : Reconstruction from Variational Autoencoder, Right : Reconstruction from Generative Adversarial Network|
+|Left : Original , Middle : Reconstruction from Variational Autoencoder, Right : Reconstruction from GAN|
 
-<p align='left'>
+<p align='center'>
 <img src="context_encoder.png">
 </p>
